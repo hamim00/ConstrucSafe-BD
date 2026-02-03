@@ -1,38 +1,26 @@
 from __future__ import annotations
 
-from typing import List
+from typing import ClassVar, Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, field_validator
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config: ClassVar[SettingsConfigDict] = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",          # <- unknown env vars are ignored
+        "case_sensitive": False,
+    }
 
-    GEMINI_API_KEY: str = Field(default="", description="Google Gemini API key")
-    GEMINI_MODEL: str = Field(default="gemini-1.5-flash")
+    APP_NAME: str = "ConstructSafe-BD API"
+    API_PREFIX: str = "/api/v1"
 
-    MAX_IMAGE_SIZE_MB: int = Field(default=10, ge=1, le=50)
+    # Keep only simple scalar fields here to avoid env JSON parsing traps
+    MAX_IMAGE_SIZE_MB: int = 10
 
-    ALLOWED_EXTENSIONS: List[str] = Field(default_factory=lambda: ["jpg", "jpeg", "png", "webp"])
-    CORS_ALLOW_ORIGINS: List[str] = Field(default_factory=lambda: ["*"])
-
-    @field_validator("ALLOWED_EXTENSIONS", mode="before")
-    @classmethod
-    def _parse_extensions(cls, v):
-        if v is None:
-            return ["jpg", "jpeg", "png", "webp"]
-        if isinstance(v, str):
-            return [x.strip().lower() for x in v.split(",") if x.strip()]
-        return v
-
-    @field_validator("CORS_ALLOW_ORIGINS", mode="before")
-    @classmethod
-    def _parse_origins(cls, v):
-        if v is None:
-            return ["*"]
-        if isinstance(v, str):
-            return [x.strip() for x in v.split(",") if x.strip()]
-        return v
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-1.5-flash"
 
 
 settings = Settings()
