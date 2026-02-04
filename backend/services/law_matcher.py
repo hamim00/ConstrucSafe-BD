@@ -13,7 +13,7 @@ JsonCollection = Union[List[Any], Dict[str, Any], None]
 
 @dataclass(frozen=True)
 class ClauseMatch:
-    # This shape matches what your analyze.py expects (attribute access)
+    # This shape matches what analyze.py expects (attribute access)
     violation_id: str
     title: str
     score: float
@@ -36,7 +36,7 @@ class LawMatcher:
       - authorities: list[dict] OR dict[str, dict]
       - penalty_profiles: list[dict] OR dict[str, dict]  (your current case: dict)
 
-    Compatibility methods for older routers:
+    Compatibility methods:
       - list_violations()
       - get_authority()
       - match_violation_text()
@@ -60,24 +60,31 @@ class LawMatcher:
             if isinstance(vid, str) and vid.strip():
                 self._violations_index[vid.strip()] = v
 
-        # Authorities
+        # Authorities (normalize weird keys like "ju   urisdiction")
         self._authorities_index: Dict[str, JsonObj] = {}
         for a in self._iter_dict_items(self._raw.get("authorities")):
-            aid = a.get("authority_id")
+            if not isinstance(a, dict):
+                continue
+            a_norm = self._normalize_authority(a)
+            aid = a_norm.get("authority_id")
             if isinstance(aid, str) and aid.strip():
-                self._authorities_index[aid.strip()] = a
+                self._authorities_index[aid.strip()] = a_norm
 
-        # Penalty profiles (list or dict)
+        # Penalty profiles (list or dict) -> normalize into response-friendly shape
         self._penalties_index: Dict[str, JsonObj] = {}
         pp = self._raw.get("penalty_profiles")
+
+        # 1) penalty_profiles is a list[dict] with penalty_profile_id
         for p in self._iter_dict_items(pp):
             pid = p.get("penalty_profile_id")
             if isinstance(pid, str) and pid.strip():
-                self._penalties_index[pid.strip()] = p
+                self._penalties_index[pid.strip()] = self._normalize_penalty_profile(pid.strip(), p)
+
+        # 2) penalty_profiles is a dict keyed by id (your current structure)
         if isinstance(pp, dict):
             for k, v in pp.items():
                 if isinstance(k, str) and k.strip() and isinstance(v, dict):
-                    self._penalties_index.setdefault(k.strip(), v)
+                    self._penalties_index[k.strip()] = self._normalize_penalty_profile(k.strip(), v)
 
         # BNBC clause library
         self._clause_library: List[JsonObj] = []
@@ -85,7 +92,7 @@ class LawMatcher:
         if isinstance(cl, list):
             self._clause_library = [x for x in cl if isinstance(x, dict)]
 
-        # Tokenization helpers
+        # Tokenization helper
         self._word_re = re.compile(r"[a-z0-9]+")
 
     # ---------------------------------------------------------------------
@@ -122,6 +129,107 @@ class LawMatcher:
             return []
         return self._word_re.findall(text.lower())
 
+    @staticmethod
+    def _normalize_authority(a: JsonObj) -> JsonObj:
+        """
+        Fix common data issues like a key containing extra spaces:
+        e.g. "ju   urisdiction" -> "jurisdiction"
+        """
+        out = dict(a)
+
+        if "jurisdiction" not in out:
+            for k in list(out.keys()):
+                if isinstance(k, str) and "".join(k.split()) == "jurisdiction":
+                    out["jurisdiction"] = out.get(k)
+                    break
+
+        return out
+
+    @staticmethod
+    def _safe_int(x: Any) -> Optional[int]:
+        try:
+            if x is None:
+                return None
+            if isinstance(x, bool):
+                return None
+            return int(x)
+        except Exception:
+            return None
+
+    def _normalize_penalty_profile(self, penalty_profile_id: str, p: JsonObj) -> JsonObj:
+        """
+        Convert internal penalty profile shapes (your laws.json structure) into the
+        response model shape expected by PenaltyProfile:
+          - penalty_profile_id
+          - law_name
+          - section
+          - penalty_type
+          - min_bdt
+          - max_bdt
+          - notes
+        """
+        law_name = p.get("law_name") or p.get("law")
+        section = p.get("section")
+
+        # Try to extract fine range from various shapes
+        min_bdt = (
+            p.get("min_bdt")
+            or p.get("fine_min_bdt")
+            or (p.get("first_offense") or {}).get("fine_min_bdt")
+        )
+        max_bdt = (
+            p.get("max_bdt")
+            or p.get("fine_max_bdt")
+            or (p.get("first_offense") or {}).get("fine_max_bdt")
+        )
+
+        # Imprisonment hints (if present) — kept in notes
+        first = p.get("first_offense") if isinstance(p.get("first_offense"), dict) else {}
+        subsequent = p.get("subsequent_offense") if isinstance(p.get("subsequent_offense"), dict) else {}
+
+        first_impr = first.get("imprisonment_max_months") if isinstance(first, dict) else None
+        sub_impr = subsequent.get("imprisonment_max_months") if isinstance(subsequent, dict) else None
+
+        penalty_type = p.get("penalty_type")
+        if not isinstance(penalty_type, str) or not penalty_type.strip():
+            if first_impr is not None or sub_impr is not None:
+                penalty_type = "fine_or_imprisonment"
+            else:
+                penalty_type = "fine"
+
+        # Build a useful notes string
+        notes = p.get("notes") or p.get("summary")
+        notes_parts: List[str] = []
+        if isinstance(notes, str) and notes.strip():
+            notes_parts.append(notes.strip())
+
+        fmax = self._safe_int((first or {}).get("fine_max_bdt"))
+        smax = self._safe_int((subsequent or {}).get("fine_max_bdt"))
+        if fmax is not None or first_impr is not None:
+            notes_parts.append(
+                f"First offense: fine up to {fmax} BDT; imprisonment up to {self._safe_int(first_impr)} months."
+                if first_impr is not None
+                else f"First offense: fine up to {fmax} BDT."
+            )
+        if smax is not None or sub_impr is not None:
+            notes_parts.append(
+                f"Subsequent offense: fine up to {smax} BDT; imprisonment up to {self._safe_int(sub_impr)} months."
+                if sub_impr is not None
+                else f"Subsequent offense: fine up to {smax} BDT."
+            )
+
+        out_notes = " ".join([x for x in notes_parts if x])
+
+        return {
+            "penalty_profile_id": penalty_profile_id,
+            "law_name": law_name,
+            "section": section,
+            "penalty_type": penalty_type,
+            "min_bdt": self._safe_int(min_bdt),
+            "max_bdt": self._safe_int(max_bdt),
+            "notes": out_notes or None,
+        }
+
     # ---------------------------------------------------------------------
     # Core APIs
     # ---------------------------------------------------------------------
@@ -137,7 +245,10 @@ class LawMatcher:
     def get_authority_info(self, authority_id: str) -> Optional[JsonObj]:
         if not authority_id:
             return None
-        return self._authorities_index.get(authority_id.strip())
+        a = self._authorities_index.get(authority_id.strip())
+        if not a:
+            return None
+        return self._normalize_authority(a)
 
     def match_violation(self, query: str, top_k: Optional[int] = None) -> Optional[Union[JsonObj, List[ClauseMatch]]]:
         """
@@ -153,7 +264,6 @@ class LawMatcher:
         if top_k is None:
             return self._match_violation_id(query)
 
-        # Text search mode
         k = int(top_k) if isinstance(top_k, int) else 3
         k = max(1, min(k, 20))
         return self._match_clause_text(query, top_k=k)
@@ -185,11 +295,17 @@ class LawMatcher:
         penalties: List[JsonObj] = []
         for item in (v.get("penalty_profiles") or []):
             if isinstance(item, str):
-                p = self._penalties_index.get(item.strip())
+                pid = item.strip()
+                p = self._penalties_index.get(pid)
                 if p:
                     penalties.append(p)
             elif isinstance(item, dict):
-                penalties.append(item)
+                pid = item.get("penalty_profile_id")
+                if isinstance(pid, str) and pid.strip():
+                    penalties.append(self._normalize_penalty_profile(pid.strip(), item))
+                else:
+                    # Best effort: keep but coerce into a stable shape
+                    penalties.append(self._normalize_penalty_profile("UNKNOWN", item))
 
         recommended: List[str] = []
         enf = v.get("enforcement")
@@ -225,7 +341,6 @@ class LawMatcher:
             keywords = clause.get("keywords") or []
             mapped_ids = clause.get("mapped_violation_ids") or []
 
-            # Build token bag from title + keywords
             t_tokens = set(self._tokenize(str(title)))
             if isinstance(keywords, list):
                 for kw in keywords:
@@ -235,17 +350,14 @@ class LawMatcher:
             if not t_tokens:
                 continue
 
-            # Simple overlap score
             overlap = q_tokens.intersection(t_tokens)
             if not overlap:
                 continue
 
-            # Jaccard-ish score (bounded 0..1)
             score = len(overlap) / max(1, len(q_tokens.union(t_tokens)))
 
-            # Clause may map to multiple violation IDs; emit one match per mapped id
             if isinstance(mapped_ids, list) and mapped_ids:
-                for vid in mapped_ids[:5]:  # avoid exploding
+                for vid in mapped_ids[:5]:
                     if isinstance(vid, str) and vid.strip():
                         scored.append(
                             ClauseMatch(
@@ -262,7 +374,6 @@ class LawMatcher:
                             )
                         )
             else:
-                # fallback: unknown mapped id
                 scored.append(
                     ClauseMatch(
                         violation_id="",
@@ -282,7 +393,7 @@ class LawMatcher:
         return scored[:top_k]
 
     # ---------------------------------------------------------------------
-    # Compatibility layer (for older routers / older code)
+    # Compatibility layer
     # ---------------------------------------------------------------------
 
     def list_violations(self) -> List[JsonObj]:
@@ -304,18 +415,12 @@ class LawMatcher:
         return self.get_authority_info(authority_id)
 
     def match_violation_text(self, text: str, top_k: int = 3) -> List[ClauseMatch]:
-        # Explicit text-mode API
         return self._match_clause_text(text, top_k=max(1, min(int(top_k), 20)))
 
     def get_laws_for_violation(self, violation_type: str) -> Optional[JsonObj]:
-        # Alias used in older task doc and earlier phases
         return self._match_violation_id(violation_type)
 
     def get_violation(self, violation_id: str) -> Optional[JsonObj]:
-        """
-        Some analyze.py versions call matcher.get_violation(vid) then read record['title'].
-        We provide a stable 'title' mapping to display_name_en.
-        """
         v = self.get_violation_details(violation_id)
         if not v:
             return None

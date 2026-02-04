@@ -33,3 +33,4 @@ __pycache__/
 
 # Local generated files
 openapi.json
+tests/test_images/

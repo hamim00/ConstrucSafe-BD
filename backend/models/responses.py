@@ -59,10 +59,37 @@ class ViolationWithLaw(BaseModel):
     recommended_actions: List[str]
 
 
+class FlaggedViolationWithLaw(BaseModel):
+    """A violation hypothesis that must be confirmed by a human inspector.
+
+    We still attach law citations and penalty profiles to help reviewers, but these are
+    conditional until verification.
+    """
+
+    violation: DetectedViolation
+    laws: List[LawReference]
+    penalties: List[PenaltyProfile] = []
+    recommended_actions: List[str]
+
+    flag_reason: str
+    requires_human_verification: bool = True
+    assumption_note: str | None = None
+
+
 class AnalysisResponse(BaseModel):
     success: bool
     image_id: str
     timestamp: str
     violations_found: int
     violations: List[ViolationWithLaw]
+
+    # New: sensitive/uncertain detections
+    flagged_found: int = 0
+    flagged_for_review: List[FlaggedViolationWithLaw] = []
+
+    # New: image quality hint for UI
+    image_quality: str | None = None
+
+    # New: pre-aggregated UI counts/priorities (optional)
+    ui_summary: dict | None = None
     disclaimer: str
