@@ -6,7 +6,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
-from backend.routers import analyze, laws, reports
+import backend.routers.analyze as analyze
+import backend.routers.laws as laws
+import backend.routers.reports as reports
 
 
 def _parse_cors_origins() -> list[str]:
@@ -16,7 +18,8 @@ def _parse_cors_origins() -> list[str]:
     return [x.strip() for x in raw.split(",") if x.strip()]
 
 
-app = FastAPI(title=settings.APP_NAME)
+# ✅ Uvicorn expects this name: app
+app = FastAPI(title=settings.APP_NAME, version=getattr(settings, "APP_VERSION", "1.0.0"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,9 +32,10 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": getattr(settings, "APP_VERSION", "1.0.0")}
 
 
-app.include_router(analyze.router)
-app.include_router(laws.router)
-app.include_router(reports.router)
+# ✅ Mount routers under /api/v1
+app.include_router(analyze.router, prefix="/api/v1")
+app.include_router(laws.router, prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")

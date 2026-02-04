@@ -1,64 +1,80 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from io import BytesIO
-from typing import Tuple
+import io
+from typing import Any, Optional
 
-from PIL import Image
+from backend.config import settings
 
-
-@dataclass(frozen=True)
-class ValidatedImage:
-    image: Image.Image
-    format: str
-    size: Tuple[int, int]
-    mime_type: str
+try:
+    from PIL import Image
+except Exception:  # pragma: no cover
+    Image = None  # type: ignore
 
 
-def _lanczos_resample() -> int:
+def validate_image(image_bytes: bytes, filename: Optional[str] = None) -> bool:
     """
-    Pillow >= 9 uses Image.Resampling.LANCZOS.
-    Older Pillow used Image.LANCZOS.
-    This helper keeps runtime + type checkers happy.
+    Robust validator:
+      - size check (MAX_IMAGE_SIZE_MB)
+      - content-based check using Pillow (not just extension)
+      - accepts JPEG/PNG/WEBP (JFIF is treated as JPEG)
     """
+    if not image_bytes:
+        return False
+
+    max_mb = int(getattr(settings, "MAX_IMAGE_SIZE_MB", 10) or 10)
+    if len(image_bytes) > max_mb * 1024 * 1024:
+        return False
+
+    if Image is None:
+        return False
+
     try:
-        return Image.Resampling.LANCZOS  # type: ignore[attr-defined]
+        img = Image.open(io.BytesIO(image_bytes))
+        img.verify()
     except Exception:
-        return Image.LANCZOS  # type: ignore[attr-defined]
-
-
-def validate_image(data: bytes, filename: str) -> ValidatedImage:
-    if not isinstance(filename, str) or not filename.strip():
-        raise ValueError("filename must be a non-empty string")
+        return False
 
     try:
-        img = Image.open(BytesIO(data))
-        img.verify()  # verifies file integrity
-    except Exception as e:
-        raise ValueError(f"Invalid image file: {e}") from e
+        img = Image.open(io.BytesIO(image_bytes))
+        fmt = (img.format or "").upper()
+    except Exception:
+        return False
 
-    # reopen after verify()
-    img = Image.open(BytesIO(data)).convert("RGB")
-
-    fmt = (img.format or "JPEG").upper()
-    mime = "image/jpeg" if fmt in {"JPG", "JPEG"} else "image/png" if fmt == "PNG" else "application/octet-stream"
-
-    return ValidatedImage(image=img, format=fmt, size=img.size, mime_type=mime)
+    return fmt in {"JPEG", "PNG", "WEBP"}
 
 
-def resize_for_model(img: Image.Image, max_side: int = 1024) -> Image.Image:
+def resize_image(img_or_bytes: Any, max_side: int = 1024, quality: int = 85) -> bytes:
     """
-    Keeps aspect ratio; resizes only if image larger than max_side.
+    Resizes to max_side preserving aspect ratio and returns JPEG bytes.
+    Accepts:
+      - bytes / bytearray / memoryview
+      - PIL.Image.Image
     """
-    w, h = img.size
-    if max(w, h) <= max_side:
-        return img
+    if Image is None:
+        raise RuntimeError("Pillow is required. Install it with: pip install pillow")
 
-    if w >= h:
-        new_w = max_side
-        new_h = int(h * (max_side / w))
+    # Normalize input to PIL.Image
+    if isinstance(img_or_bytes, (bytes, bytearray, memoryview)):
+        raw = bytes(img_or_bytes)
+        img = Image.open(io.BytesIO(raw))
     else:
-        new_h = max_side
-        new_w = int(w * (max_side / h))
+        img = img_or_bytes  # assume PIL image
 
-    return img.resize((new_w, new_h), resample=_lanczos_resample())
+    img = img.convert("RGB")
+    w, h = img.size
+    scale = min(1.0, float(max_side) / float(max(w, h)))
+    if scale < 1.0:
+        img = img.resize((int(w * scale), int(h * scale)))
+
+    out = io.BytesIO()
+    img.save(out, format="JPEG", quality=int(quality), optimize=True)
+    return out.getvalue()
+
+
+# Backward-compatible aliases used elsewhere in your project
+def resize_for_model(img_or_bytes: Any, max_side: int = 1024) -> bytes:
+    return resize_image(img_or_bytes, max_side=max_side)
+
+
+def validate_image_file(image_bytes: bytes, filename: Optional[str] = None) -> bool:
+    return validate_image(image_bytes, filename)
