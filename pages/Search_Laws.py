@@ -10,7 +10,6 @@ st.set_page_config(page_title="Search Laws • ConstrucSafe BD", page_icon="🔎
 load_css()
 lang = sidebar()
 
-# Page header
 st.markdown(
     f"""
     <div class="page-header">
@@ -43,22 +42,6 @@ if st.button(t("search_btn", lang), type="primary"):
                 st.info("No matches found.")
             else:
                 df = pd.DataFrame(matches)
-                cols = [
-                    c
-                    for c in [
-                        "score",
-                        "violation_id",
-                        "citation",
-                        "section",
-                        "title",
-                        "pdf_page",
-                        "gazette_page",
-                        "clause_id",
-                        "source_catalog_id",
-                        "confidence",
-                    ]
-                    if c in df.columns
-                ]
+                cols = [c for c in ["score", "violation_id", "citation", "section", "title", "pdf_page", "gazette_page", "clause_id", "source_catalog_id", "confidence"] if c in df.columns]
                 st.dataframe(df[cols] if cols else df, use_container_width=True)
-
                 st.caption("Tip: pick a violation_id above and open it in **Browse Laws** to see full details.")

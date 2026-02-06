@@ -81,22 +81,6 @@ def _fmt_bdt(x: Any) -> Optional[str]:
         return None
 
 
-def _fmt_months_years(p: Dict[str, Any]) -> Optional[str]:
-    y = p.get("imprisonment_max_years")
-    m = p.get("imprisonment_max_months")
-    if y is not None:
-        try:
-            return f"কারাদণ্ড সর্বোচ্চ {int(y)} বছর" if False else f"Imprisonment up to {int(y)} year(s)"
-        except Exception:
-            pass
-    if m is not None:
-        try:
-            return f"Imprisonment up to {int(m)} month(s)"
-        except Exception:
-            pass
-    return None
-
-
 def _penalty_quick_summary(penalties: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Extract a compact penalty summary across all penalty profiles."""
     max_fine = 0
@@ -105,10 +89,9 @@ def _penalty_quick_summary(penalties: List[Dict[str, Any]]) -> Dict[str, Any]:
     laws_set = set()
 
     for p in penalties:
-        law_name = p.get("law_name") or p.get("law") or ""
         section = p.get("section") or ""
-        if law_name and section:
-            laws_set.add(f"{section}")
+        if section:
+            laws_set.add(section)
 
         for key in ["max_bdt", "fine_max_bdt"]:
             val = p.get(key)
@@ -122,6 +105,8 @@ def _penalty_quick_summary(penalties: List[Dict[str, Any]]) -> Dict[str, Any]:
         sub = p.get("subsequent_offense") if isinstance(p.get("subsequent_offense"), dict) else {}
 
         for obj in [first, sub, p]:
+            if not isinstance(obj, dict):
+                continue
             fmax = obj.get("fine_max_bdt")
             if fmax:
                 try:
@@ -160,15 +145,25 @@ def _penalty_lines(p: Dict[str, Any]) -> List[str]:
     max_bdt = _fmt_bdt(p.get("max_bdt") or p.get("fine_max_bdt"))
 
     if min_bdt and max_bdt:
-        lines.append(f"Fine range: {min_bdt}–{max_bdt}")
+        lines.append(f"Fine range: {min_bdt} – {max_bdt}")
     elif max_bdt:
         lines.append(f"Fine up to: {max_bdt}")
     elif min_bdt:
         lines.append(f"Fine from: {min_bdt}")
 
-    imprison = _fmt_months_years(p)
-    if imprison:
-        lines.append(imprison)
+    # Imprisonment
+    y = p.get("imprisonment_max_years")
+    m = p.get("imprisonment_max_months")
+    if y is not None:
+        try:
+            lines.append(f"Imprisonment up to {int(y)} year(s)")
+        except Exception:
+            pass
+    elif m is not None:
+        try:
+            lines.append(f"Imprisonment up to {int(m)} month(s)")
+        except Exception:
+            pass
 
     first = p.get("first_offense")
     if isinstance(first, dict):
@@ -241,104 +236,96 @@ def render_violation_card(violation_data: Dict[str, Any], lang: str = "en"):
     loc = v.get("location", "")
     parties = v.get("affected_parties", [])
 
-    # Use display-friendly name
     display_name = vtype.replace("_", " ").title()
-
     loc_label = t("location", lang)
     affected_label = t("affected", lang)
 
-    # ── Main card ──
-    st.markdown(
-        f'''
-        <div class="violation-card sev-{sev}">
-            <div class="v-header">
-                <h4 class="v-title">{display_name}</h4>
-                <div class="badges-row">
-                    {_sev_badge(sev, lang)}
-                    {_conf_badge(conf, lang)}
-                </div>
-            </div>
-            <p class="v-desc">{desc}</p>
-            <div class="v-meta">
-                <span><strong>{loc_label}:</strong> {loc or "N/A"}</span>
-                <span><strong>{affected_label}:</strong> {", ".join(parties) if parties else "N/A"}</span>
-            </div>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
+    # ── Main card (self-contained HTML) ──
+    card_html = f"""<div class="violation-card sev-{sev}">
+  <div class="v-header">
+    <h4 class="v-title">{display_name}</h4>
+    <div class="badges-row">{_sev_badge(sev, lang)} {_conf_badge(conf, lang)}</div>
+  </div>
+  <p class="v-desc">{desc}</p>
+  <div class="v-meta">
+    <span><strong>{loc_label}:</strong> {loc or "N/A"}</span>
+    <span><strong>{affected_label}:</strong> {", ".join(parties) if parties else "N/A"}</span>
+  </div>
+</div>"""
+    st.markdown(card_html, unsafe_allow_html=True)
 
-    # ── Inline penalty summary (compact, always visible) ──
+    # ── Inline penalty summary (always visible, compact) ──
     if penalties:
         ps = _penalty_quick_summary(penalties)
-        items = []
+        items_html = ""
         if ps["max_fine"] > 0:
-            items.append(f'<span class="ps-item">💰 Fine up to ৳{ps["max_fine"]:,}</span>')
+            items_html += f'<span class="ps-item">Fine up to ৳{ps["max_fine"]:,}</span>'
         if ps["max_imprison_years"] > 0:
-            items.append(f'<span class="ps-item">⚖️ Up to {ps["max_imprison_years"]} year(s)</span>')
+            items_html += f'<span class="ps-item">Up to {ps["max_imprison_years"]} year(s)</span>'
         elif ps["max_imprison_months"] > 0:
-            items.append(f'<span class="ps-item">⚖️ Up to {ps["max_imprison_months"]} month(s)</span>')
+            items_html += f'<span class="ps-item">Up to {ps["max_imprison_months"]} month(s)</span>'
         if ps["sections"]:
-            items.append(f'<span class="ps-item">📜 {", ".join(ps["sections"][:3])}</span>')
+            items_html += f'<span class="ps-item">{", ".join(ps["sections"][:3])}</span>'
 
-        if items:
+        if items_html:
             st.markdown(
-                f'''<div class="penalty-summary">
-                    <span class="ps-label">Penalty:</span>
-                    {"".join(items)}
-                </div>''',
+                f'<div class="penalty-summary"><span class="ps-label">PENALTY:</span>{items_html}</div>',
                 unsafe_allow_html=True,
             )
 
-    # ── Key legal basis (compact) ──
+    # ── Key legal basis (compact, always visible) ──
     primary = _pick_primary_law(laws) if isinstance(laws, list) else None
     if primary:
         sid = primary.get("source_id") or "Unknown"
-        title = source_title(str(sid))
+        title_text = source_title(str(sid))
         portal = source_portal_url(str(sid))
         citation = primary.get("citation") or ""
         interp = primary.get("interpretation") or ""
         conf_val = primary.get("confidence") or ""
 
-        portal_html = f' • <a href="{portal}" target="_blank">official portal</a>' if portal else ""
+        portal_link = f' · <a href="{portal}" target="_blank">official portal</a>' if portal else ""
         basis_label = t("key_legal_basis", lang)
+        interp_short = interp[:200] + ("…" if len(interp) > 200 else "")
+
         st.markdown(
-            f'''
-            <div class="law-highlight">
-              <div class="law-source-title">{basis_label}: {title}{portal_html}</div>
-              <div class="law-meta"><strong>Citation:</strong> {citation}</div>
-              <div class="law-meta"><strong>Why this matches:</strong> {interp[:200]}{"…" if len(interp) > 200 else ""}</div>
-              <div class="law-meta" style="opacity:0.7;"><strong>{t("confidence_label", lang)}:</strong> {conf_val}</div>
-            </div>
-            ''',
+            f"""<div class="law-highlight">
+  <div class="law-source-title">{basis_label}: {title_text}{portal_link}</div>
+  <div class="law-meta"><strong>Citation:</strong> {citation}</div>
+  <div class="law-meta"><strong>Why this matches:</strong> {interp_short}</div>
+  <div class="law-meta" style="opacity:0.7;"><strong>{t("confidence_label", lang)}:</strong> {conf_val}</div>
+</div>""",
             unsafe_allow_html=True,
         )
 
-    # ── Expandable: Legal references ──
+    # ── Source chips ──
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
     if laws:
-        grouped: Dict[str, List[Dict[str, Any]]] = {}
         for law in laws:
             sid = str(law.get("source_id") or "Unknown")
             grouped.setdefault(sid, []).append(law)
 
-        # Compact chips
         chips = []
         for sid, items in sorted(grouped.items(), key=lambda kv: (-len(kv[1]), kv[0]))[:10]:
-            chips.append(f'<span class="chip">{source_title(sid)} • {len(items)}</span>')
+            chips.append(f'<span class="chip">{source_title(sid)} · {len(items)}</span>')
         st.markdown("".join(chips), unsafe_allow_html=True)
 
-        with st.expander(f"📚 {t('legal_refs', lang)}", expanded=False):
+    # Use a unique key prefix per violation to avoid key collisions
+    card_key = vtype.replace(" ", "_")
+
+    # ── Expander: Legal references ──
+    if laws and grouped:
+        with st.expander(f"Legal references (grouped)", expanded=False):
             sids = [sid for sid, _ in sorted(grouped.items(), key=lambda kv: (-len(kv[1]), kv[0]))]
-            default_sid = str(primary.get("source_id")) if primary and primary.get("source_id") in grouped else sids[0]
+            default_sid = str(primary.get("source_id")) if primary and str(primary.get("source_id")) in grouped else sids[0]
             selected = st.selectbox(
                 "Select law source",
                 options=sids,
                 index=sids.index(default_sid) if default_sid in sids else 0,
                 format_func=lambda x: f"{source_title(x)} ({len(grouped.get(x, []))})",
-                key=f"lawsrc_{vtype}",
+                key=f"src_{card_key}",
             )
-            show_full = st.checkbox("Show full interpretations", value=False, key=f"full_interp_{vtype}")
-            show_excerpts = st.checkbox("Show text excerpts (if available)", value=False, key=f"show_excerpt_{vtype}")
+            show_full = st.checkbox("Show full interpretations", value=False, key=f"full_{card_key}")
+            show_excerpts = st.checkbox("Show text excerpts (if available)", value=False, key=f"exc_{card_key}")
 
             portal = source_portal_url(selected)
             if portal:
@@ -364,12 +351,12 @@ def render_violation_card(violation_data: Dict[str, Any], lang: str = "en"):
                     excerpt = it.get("relevant_text_excerpt")
                     if excerpt:
                         cit = it.get("citation") or "excerpt"
-                        with st.expander(f"Excerpt • {cit}", expanded=False):
+                        with st.expander(f"Excerpt: {cit}", expanded=False):
                             st.code(str(excerpt)[:2000])
 
-    # ── Expandable: Full penalty details ──
+    # ── Expander: Penalties ──
     if penalties:
-        with st.expander(f"💰 {t('penalties', lang)} — {t('penalty_note', lang)[:80]}…", expanded=False):
+        with st.expander("Penalties (full details)", expanded=False):
             st.caption(t("penalty_note", lang))
 
             seen = set()
@@ -383,20 +370,16 @@ def render_violation_card(violation_data: Dict[str, Any], lang: str = "en"):
                 lines = _penalty_lines(p)
 
                 st.markdown(
-                    f'''
-                    <div class="penalty-box">
-                        <strong>{law_name}</strong> — {section}
-                        <div class="penalty-details">
-                            {"<br/>".join(lines) if lines else "—"}
-                        </div>
-                    </div>
-                    ''',
+                    f"""<div class="penalty-box">
+  <strong>{law_name}</strong> — {section}
+  <div class="penalty-details">{"<br/>".join(lines) if lines else "—"}</div>
+</div>""",
                     unsafe_allow_html=True,
                 )
 
-    # ── Expandable: Recommended actions ──
+    # ── Expander: Recommended actions ──
     if actions:
-        with st.expander(f"✅ {t('recommended_actions', lang)}", expanded=False):
+        with st.expander("Recommended actions", expanded=False):
             for a in actions:
                 st.markdown(f"- {a}")
 
@@ -411,11 +394,11 @@ def render_violation_card(violation_data: Dict[str, Any], lang: str = "en"):
 
                         st.markdown(f"**Contact ({aid})**: {full_name}")
                         if hotline:
-                            st.markdown(f"📞 Hotline: [{hotline}](tel:{hotline})")
+                            st.markdown(f"Hotline: [{hotline}](tel:{hotline})")
                         if email:
-                            st.markdown(f"✉️ Email: [{email}](mailto:{email})")
+                            st.markdown(f"Email: [{email}](mailto:{email})")
                         if website:
-                            st.markdown(f"🌐 Website: {website}")
+                            st.markdown(f"Website: {website}")
 
-    # Separator between cards
-    st.markdown("<div style='margin-bottom:0.5rem;'></div>", unsafe_allow_html=True)
+    # Spacer between violation cards
+    st.markdown("")

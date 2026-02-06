@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-from typing import Optional, Tuple
 
 import streamlit as st
 from PIL import Image
@@ -29,16 +28,16 @@ st.markdown(
 )
 
 # ── Session state ──
-if "uploaded_image_bytes" not in st.session_state:
-    st.session_state.uploaded_image_bytes = None
-if "uploaded_image_name" not in st.session_state:
-    st.session_state.uploaded_image_name = None
-if "analysis_result" not in st.session_state:
-    st.session_state.analysis_result = None
+for key, default in [
+    ("uploaded_image_bytes", None),
+    ("uploaded_image_name", None),
+    ("analysis_result", None),
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 
 def _resize_for_preview(img: Image.Image, max_w: int = 900, max_h: int = 450) -> Image.Image:
-    """Resize large images for UI-friendly preview while preserving aspect ratio."""
     w, h = img.size
     scale = min(max_w / max(w, 1), max_h / max(h, 1), 1.0)
     if scale >= 1.0:
@@ -47,12 +46,24 @@ def _resize_for_preview(img: Image.Image, max_w: int = 900, max_h: int = 450) ->
     return img.resize(new_size, Image.Resampling.LANCZOS)
 
 
+_SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+
+def _sort_violations(violations: list) -> list:
+    """Sort violations: critical first, then high, medium, low."""
+    def _key(v):
+        viol = v.get("violation", {}) or {}
+        sev = (viol.get("severity") or "medium").lower()
+        return _SEV_ORDER.get(sev, 99)
+    return sorted(violations, key=_key)
+
+
 # ── Upload & Controls ──
 left, right = st.columns([1, 2], gap="large")
 
 with left:
     uploaded_file = st.file_uploader(
-        "Upload image",
+        t("upload_help", lang),
         type=["jpg", "jpeg", "png"],
         help=t("upload_help", lang),
         label_visibility="collapsed",
@@ -116,12 +127,13 @@ if analyze_clicked:
         st.session_state.analysis_result = result
 
 # ── Results ──
-if st.session_state.analysis_result:
-    result = st.session_state.analysis_result
+result = st.session_state.analysis_result
+
+if result is not None:
     st.markdown("---")
 
     if not result.get("success", False):
-        st.error(f"❌ Analysis failed: {result.get('error', 'Unknown error')}")
+        st.error(f"Analysis failed: {result.get('error', 'Unknown error')}")
     else:
         # ── Summary metrics ──
         if result.get("ui_summary"):
@@ -144,7 +156,7 @@ if st.session_state.analysis_result:
             if src_counts:
                 chips = []
                 for sid, cnt in sorted(src_counts.items(), key=lambda x: (-x[1], x[0]))[:8]:
-                    chips.append(f'<span class="chip">{source_title(sid)} • {cnt}</span>')
+                    chips.append(f'<span class="chip">{source_title(sid)} · {cnt}</span>')
                 st.markdown(
                     f"""
                     <div class="legal-overview-bar">
@@ -155,28 +167,30 @@ if st.session_state.analysis_result:
                     unsafe_allow_html=True,
                 )
 
-        # ── Detected Violations ──
+        # ── Detected Violations (sorted by severity) ──
         if violations:
+            sorted_violations = _sort_violations(violations)
+
             st.markdown(
                 f"""
                 <div class="section-header">
                     <span class="section-icon">🚨</span>
                     <h3>{t("detected_violations", lang)}</h3>
-                    <span class="section-count">{len(violations)}</span>
+                    <span class="section-count">{len(sorted_violations)}</span>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # Show top 3 violations directly
+            # Show top 3 violations directly (highest severity first)
             TOP_N = 3
-            top_violations = violations[:TOP_N]
-            remaining_violations = violations[TOP_N:]
+            top_violations = sorted_violations[:TOP_N]
+            remaining_violations = sorted_violations[TOP_N:]
 
             for v in top_violations:
                 render_violation_card(v, lang=lang)
 
-            # Remaining violations in expander
+            # Remaining in expander
             if remaining_violations:
                 n_more = len(remaining_violations)
                 with st.expander(
@@ -211,23 +225,17 @@ if st.session_state.analysis_result:
             )
             st.caption(t("flagged_caption", lang))
 
-            for f in flagged:
-                render_flagged_item(f, lang=lang)
+            for f_item in flagged:
+                render_flagged_item(f_item, lang=lang)
 
         # ── Disclaimer ──
         disclaimer_text = result.get("disclaimer", t("about_disclaimer", lang))
         bengali_cls = "bengali-text" if lang == "bn" else ""
         st.markdown(
-            f"""
-            <div class="disclaimer-box {bengali_cls}">
-                {disclaimer_text}
-            </div>
-            """,
+            f"""<div class="disclaimer-box {bengali_cls}">{disclaimer_text}</div>""",
             unsafe_allow_html=True,
         )
-else:
-    # No result yet
-    if st.session_state.uploaded_image_bytes:
-        st.info(t("click_analyze", lang))
-    else:
-        st.info(t("need_upload", lang))
+
+elif st.session_state.uploaded_image_bytes:
+    # Image uploaded but not yet analyzed — single message only
+    st.info(t("click_analyze", lang))

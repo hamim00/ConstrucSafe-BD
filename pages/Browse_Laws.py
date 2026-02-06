@@ -9,12 +9,11 @@ st.set_page_config(page_title="Browse Laws • ConstrucSafe BD", page_icon="📚
 load_css()
 lang = sidebar()
 
-# Page header
 st.markdown(
     f"""
     <div class="page-header">
         <h1>📚 {t("browse_title", lang)}</h1>
-        <div class="subtitle">Select a violation type to view its associated laws, penalties, and enforcement details.</div>
+        <div class="subtitle">Select a violation type to view associated laws, penalties, and enforcement details.</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -60,7 +59,6 @@ if violations:
                 for ind in details.get("visual_indicators", []) or []:
                     st.markdown(f"- {ind}")
 
-            # Primary authority
             enf = details.get("enforcement", {}) or {}
             aid = enf.get("primary_authority")
             if aid:
@@ -70,10 +68,7 @@ if violations:
                     a = client.get_authority(aid)
                     st.markdown(f"**{a.get('full_name', '')}** ({a.get('authority_id', '')})")
                     if a.get("full_name_bn"):
-                        st.markdown(
-                            f"<div class='bengali-text'>{a.get('full_name_bn')}</div>",
-                            unsafe_allow_html=True,
-                        )
+                        st.markdown(f"<div class='bengali-text'>{a.get('full_name_bn')}</div>", unsafe_allow_html=True)
                     st.markdown(f"**Jurisdiction:** {a.get('jurisdiction', '')}")
                     if a.get("hotline"):
                         st.markdown(f"**Hotline:** {a.get('hotline')}")
@@ -82,20 +77,17 @@ if violations:
                 except Exception:
                     st.info("Authority info not available.")
 
-            # Legal references
             refs = details.get("legal_references", []) or []
             if refs:
                 st.markdown("---")
                 st.markdown("### Legal references")
                 for ref in refs[:10]:
                     st.markdown(
-                        f'''
-                        <div class="law-reference">
-                            <div class="law-citation">{ref.get("source_id", "")} • {ref.get("citation", "")}</div>
-                            <div style="font-size:0.9rem;">{ref.get("interpretation", "")}</div>
-                            <div style="font-size:0.8rem; color:#666; margin-top:0.25rem;">Confidence: {ref.get("confidence", "")}</div>
-                        </div>
-                        ''',
+                        f"""<div class="law-reference">
+  <div class="law-citation">{ref.get("source_id", "")} · {ref.get("citation", "")}</div>
+  <div style="font-size:0.9rem;">{ref.get("interpretation", "")}</div>
+  <div style="font-size:0.8rem; color:#666; margin-top:0.25rem;">Confidence: {ref.get("confidence", "")}</div>
+</div>""",
                         unsafe_allow_html=True,
                     )
         else:

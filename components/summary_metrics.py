@@ -7,10 +7,7 @@ from utils.i18n import t
 
 
 def render_summary_metrics(ui_summary: Dict[str, Any], lang: str = "en"):
-    """Render colorful, compact KPI cards for analysis summary."""
-
     total = ui_summary.get("total", 0)
-    # Compute total from parts if not provided
     if total == 0:
         total = (
             ui_summary.get("critical_count", 0)

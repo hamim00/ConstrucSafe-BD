@@ -26,7 +26,7 @@ def sidebar() -> str:
 
     lang = st.session_state.lang
 
-    # Brand
+    # ── Brand ──
     st.sidebar.markdown(
         """
         <div class="sidebar-brand">
@@ -37,16 +37,16 @@ def sidebar() -> str:
         unsafe_allow_html=True,
     )
 
-    # Navigation
-    st.sidebar.page_link("pages/Analyze.py", label="🔍 " + t("analyze_title", lang)[:20])
-    st.sidebar.page_link("pages/Browse_Laws.py", label="📚 " + t("browse_title", lang)[:25])
-    st.sidebar.page_link("pages/Search_Laws.py", label="🔎 " + t("search_title", lang)[:25])
-    st.sidebar.page_link("pages/About.py", label="ℹ️ " + t("about_title", lang)[:15])
+    # ── Navigation (replaces hidden default nav) ──
+    st.sidebar.page_link("pages/Analyze.py", label="🔍 Analyze Image", use_container_width=True)
+    st.sidebar.page_link("pages/Browse_Laws.py", label="📚 Browse Laws", use_container_width=True)
+    st.sidebar.page_link("pages/Search_Laws.py", label="🔎 Search Clauses", use_container_width=True)
+    st.sidebar.page_link("pages/About.py", label="ℹ️ About", use_container_width=True)
 
     st.sidebar.markdown("---")
 
-    # Settings
-    st.sidebar.markdown(f"### ⚙️ {t('sidebar_settings', lang)}")
+    # ── Language ──
+    st.sidebar.markdown(f"#### ⚙️ {t('sidebar_settings', lang)}")
 
     lang_label = st.sidebar.radio(
         t("nav_language", lang),
@@ -56,18 +56,16 @@ def sidebar() -> str:
     )
     st.session_state.lang = "bn" if lang_label == "বাংলা" else "en"
 
-    # Backend status
+    # ── Backend status ──
     st.sidebar.markdown("---")
-    st.sidebar.markdown(f"**{t('nav_backend', st.session_state.lang)}**")
     client = get_api_client()
     try:
         h = client.health()
         version = h.get("version", "n/a")
-        st.sidebar.success(f"{t('nav_status', st.session_state.lang)}: ✅ v{version}")
+        st.sidebar.success(f"Backend: ✅ v{version}")
     except Exception:
-        st.sidebar.error(f"{t('nav_status', st.session_state.lang)}: ❌ Unavailable")
+        st.sidebar.error("Backend: ❌ Unavailable")
 
-    st.sidebar.markdown("---")
     st.sidebar.caption("ConstrucSafe BD • v2.0")
 
     return st.session_state.lang
