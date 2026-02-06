@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import streamlit as st
 from PIL import Image
 
@@ -8,8 +9,9 @@ from utils.i18n import t
 from components.violation_card import render_violation_card
 from components.flagged_item import render_flagged_item
 from components.summary_metrics import render_summary_metrics
+from utils.source_catalog import source_title
 
-st.set_page_config(page_title="Analyze • ConstrucSafe BD", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="Analyze • ConstrucSafe BD", layout="wide")
 load_css()
 lang = sidebar()
 
@@ -30,20 +32,27 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
-    st.session_state.uploaded_image_bytes = uploaded_file.read()
+    image_bytes = uploaded_file.read()
+    st.session_state.uploaded_image_bytes = image_bytes
     st.session_state.uploaded_image_name = uploaded_file.name
 
+    # Preview
     try:
-        img = Image.open(uploaded_file)
+        img = Image.open(io.BytesIO(image_bytes))
         st.image(img, caption=uploaded_file.name, use_container_width=True)
     except Exception:
         st.info("Preview unavailable for this file.")
 
-    c1, c2, c3 = st.columns([1,1,1])
+    c1, c2, c3 = st.columns([1, 1, 1])
     with c1:
         include_laws = st.toggle(t("include_laws", lang), value=True)
     with c2:
-        mode = st.selectbox(t("mode", lang), options=["fast", "accurate"], index=0, format_func=lambda x: t(f"mode_{x}", lang) if f"mode_{x}" in ["mode_fast","mode_accurate"] else x)
+        mode = st.selectbox(
+            t("mode", lang),
+            options=["fast", "accurate"],
+            index=0,
+            format_func=lambda x: t(f"mode_{x}", lang),
+        )
     with c3:
         analyze_clicked = st.button(t("analyze_btn", lang), type="primary", use_container_width=True)
 
@@ -51,7 +60,7 @@ if uploaded_file is not None:
         client = get_api_client()
         with st.spinner("Analyzing..."):
             result = client.analyze_image(
-                st.session_state.uploaded_image_bytes,
+                image_bytes,
                 filename=st.session_state.uploaded_image_name or "image.jpg",
                 include_laws=include_laws,
                 mode=mode,
@@ -72,9 +81,24 @@ if uploaded_file is not None:
             if quality and quality != "good":
                 st.warning(f"⚠️ Image quality: {quality}. Results may be less accurate.")
 
+            # Legal basis overview (acts referenced across all detected violations)
+            violations = result.get("violations", []) or []
+            if violations:
+                src_counts = {}
+                for item in violations:
+                    for law in (item.get("laws") or []):
+                        sid = str(law.get("source_id") or "Unknown")
+                        src_counts[sid] = src_counts.get(sid, 0) + 1
+
+                if src_counts:
+                    st.markdown("### Legal basis overview")
+                    chips = []
+                    for sid, cnt in sorted(src_counts.items(), key=lambda x: (-x[1], x[0]))[:12]:
+                        chips.append(f'<span class="chip">{source_title(sid)} • {cnt}</span>')
+                    st.markdown("".join(chips), unsafe_allow_html=True)
+
             st.markdown("---")
 
-            violations = result.get("violations", []) or []
             if violations:
                 st.markdown(f"### Detected Violations ({len(violations)})")
                 for v in violations:

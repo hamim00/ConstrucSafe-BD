@@ -43,3 +43,14 @@ h3 { color: #404040 !important; font-weight: 600 !important; font-size: 1.25rem 
 section[data-testid="stSidebar"] > div { background: linear-gradient(180deg, #1F4E79 0%, #2E75B6 100%); }
 section[data-testid="stSidebar"] * { color: white !important; }
 section[data-testid="stSidebar"] a { color: #eaf4ff !important; }
+
+
+/* Legal highlight + chips */
+.law-highlight {
+  background:#eef6ff; border:1px solid #d6e8ff; border-radius:10px;
+  padding:0.9rem 1rem; margin-top:0.9rem;
+}
+.law-source-title { font-weight:800; color:#1F4E79; }
+.law-meta { font-size:0.85rem; color:#4d4d4d; margin-top:0.25rem; }
+.chip { display:inline-block; padding:0.22rem 0.6rem; border-radius:16px; background:#f1f3f5; color:#333;
+  margin:0.15rem 0.35rem 0 0; font-size:0.8rem; border:1px solid #e6e6e6; }
