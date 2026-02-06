@@ -1,56 +1,631 @@
-/* ===== CONSTRUCSAFE BD - PREMIUM STREAMLIT THEME ===== */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+/* ===== CONSTRUCSAFE BD v2.0 — PROFESSIONAL SAFETY APP THEME ===== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-.stApp { background-color: #f5f7fa; }
-.block-container { max-width: 1200px !important; padding: 2rem 1rem !important; }
+/* ── CSS Variables ── */
+:root {
+    --cs-navy: #0F2B46;
+    --cs-blue: #1565C0;
+    --cs-blue-light: #E3F2FD;
+    --cs-blue-mid: #42A5F5;
+    --cs-teal: #00897B;
+    --cs-orange: #EF6C00;
+    --cs-red: #C62828;
+    --cs-amber: #F9A825;
+    --cs-green: #2E7D32;
+    --cs-gray-50: #FAFBFC;
+    --cs-gray-100: #F1F3F6;
+    --cs-gray-200: #E4E8ED;
+    --cs-gray-300: #CDD3DC;
+    --cs-gray-600: #5A6577;
+    --cs-gray-800: #2D3748;
+    --cs-gray-900: #1A202C;
+    --cs-radius: 10px;
+    --cs-radius-lg: 16px;
+    --cs-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --cs-shadow-md: 0 4px 14px rgba(0,0,0,0.08);
+    --cs-shadow-lg: 0 10px 30px rgba(0,0,0,0.10);
+    --cs-font: 'DM Sans', 'Noto Sans Bengali', system-ui, sans-serif;
+    --cs-mono: 'JetBrains Mono', monospace;
+}
 
-h1 { color: #1F4E79 !important; font-weight: 700 !important; font-size: 2.5rem !important; margin-bottom: 1rem !important; }
-h2 { color: #2E75B6 !important; font-weight: 600 !important; font-size: 1.75rem !important; margin-top: 1.5rem !important; }
-h3 { color: #404040 !important; font-weight: 600 !important; font-size: 1.25rem !important; }
+/* ── Base ── */
+.stApp {
+    background: var(--cs-gray-50) !important;
+    font-family: var(--cs-font) !important;
+}
 
-.bengali-text { font-family: 'Noto Sans Bengali', sans-serif !important; line-height: 1.8 !important; }
+.block-container {
+    max-width: 1180px !important;
+    padding: 1.5rem 1.5rem 3rem !important;
+}
 
-/* Cards */
+/* ── Typography ── */
+h1 {
+    font-family: var(--cs-font) !important;
+    color: var(--cs-navy) !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.2 !important;
+}
+
+h2 {
+    font-family: var(--cs-font) !important;
+    color: var(--cs-gray-800) !important;
+    font-weight: 600 !important;
+    font-size: 1.35rem !important;
+    letter-spacing: -0.01em !important;
+    margin-top: 1.25rem !important;
+}
+
+h3 {
+    font-family: var(--cs-font) !important;
+    color: var(--cs-gray-800) !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    margin-top: 0.75rem !important;
+}
+
+h4 {
+    font-family: var(--cs-font) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+}
+
+p, li, .stMarkdown, span, div {
+    font-family: var(--cs-font) !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+}
+
+/* ── Bengali Text ── */
+.bengali-text,
+.bengali-text * {
+    font-family: 'Noto Sans Bengali', var(--cs-font) !important;
+    line-height: 1.9 !important;
+}
+
+/* ── Sidebar ── */
+section[data-testid="stSidebar"] > div {
+    background: linear-gradient(175deg, var(--cs-navy) 0%, #163D5E 60%, #1B4F72 100%) !important;
+    padding-top: 1.5rem !important;
+}
+
+section[data-testid="stSidebar"] * {
+    color: #E8EFF5 !important;
+    font-family: var(--cs-font) !important;
+}
+
+section[data-testid="stSidebar"] .stRadio label {
+    font-size: 0.9rem !important;
+    padding: 0.3rem 0 !important;
+}
+
+section[data-testid="stSidebar"] a {
+    color: var(--cs-blue-mid) !important;
+    text-decoration: none !important;
+}
+
+section[data-testid="stSidebar"] a:hover {
+    color: #90CAF9 !important;
+}
+
+.sidebar-brand {
+    text-align: center;
+    padding: 0.5rem 0 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    margin-bottom: 1rem;
+}
+
+.sidebar-brand h2 {
+    color: white !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    letter-spacing: 0.02em;
+}
+
+.sidebar-brand .tagline {
+    color: rgba(255,255,255,0.6) !important;
+    font-size: 0.72rem !important;
+    margin-top: 0.2rem;
+}
+
+/* ── Page Header ── */
+.page-header {
+    background: linear-gradient(135deg, var(--cs-navy) 0%, #1B5E80 100%);
+    border-radius: var(--cs-radius-lg);
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    right: -5%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.page-header h1 {
+    color: white !important;
+    font-size: 1.6rem !important;
+    margin: 0 !important;
+}
+
+.page-header .subtitle {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.85rem !important;
+    margin-top: 0.35rem;
+}
+
+/* ── Metric Cards ── */
+.metrics-row {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+    flex-wrap: wrap;
+}
+
+.metric-card {
+    background: white;
+    border-radius: var(--cs-radius);
+    padding: 1rem 1.25rem;
+    text-align: center;
+    box-shadow: var(--cs-shadow-sm);
+    border: 1px solid var(--cs-gray-200);
+    min-width: 100px;
+    flex: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cs-shadow-md);
+}
+
+.metric-card .metric-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.metric-card .metric-value {
+    font-family: var(--cs-font) !important;
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    margin-bottom: 0.15rem;
+}
+
+.metric-card .metric-label {
+    font-size: 0.78rem !important;
+    color: var(--cs-gray-600) !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.metric-card.metric-total { border-top: 3px solid var(--cs-blue); }
+.metric-card.metric-high { border-top: 3px solid var(--cs-orange); }
+.metric-card.metric-medium { border-top: 3px solid var(--cs-amber); }
+.metric-card.metric-low { border-top: 3px solid var(--cs-green); }
+.metric-card.metric-review { border-top: 3px solid #7B1FA2; }
+
+/* ── Section Headers ── */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.5rem 0 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--cs-gray-200);
+}
+
+.section-header .section-icon {
+    font-size: 1.1rem;
+}
+
+.section-header h3 {
+    margin: 0 !important;
+    font-size: 1.05rem !important;
+    color: var(--cs-gray-800) !important;
+}
+
+.section-header .section-count {
+    background: var(--cs-blue);
+    color: white;
+    font-size: 0.72rem !important;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 12px;
+    line-height: 1.4;
+}
+
+/* ── Violation Cards ── */
 .violation-card {
-  background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-left: 4px solid #2E75B6;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.violation-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-
-.severity-badge { display:inline-block; padding:0.35rem 0.75rem; border-radius: 20px; font-size:0.75rem; font-weight:600; color:white; }
-.confidence-badge { display:inline-block; padding:0.25rem 0.6rem; border-radius: 14px; font-size:0.72rem; font-weight:600; background:#e9ecef; color:#333; margin-left:0.4rem; }
-
-.law-reference { background:#f8f9fa; border-left:3px solid #2E75B6; padding:0.75rem 1rem; border-radius:8px; margin-bottom:0.6rem; }
-.law-citation { font-weight:700; color:#1F4E79; margin-bottom:0.25rem; }
-
-.penalty-box { background:#fff; border:1px solid #e6e6e6; border-radius:8px; padding:0.8rem 1rem; margin:0.5rem 0; }
-.penalty-amount { font-weight:700; }
-
-.disclaimer-box {
-  background:#fff3cd; border:1px solid #ffeeba; border-radius:10px;
-  padding:1rem 1.25rem; color:#856404; margin-top:1rem;
+    background: white;
+    border-radius: var(--cs-radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.85rem;
+    box-shadow: var(--cs-shadow-sm);
+    border: 1px solid var(--cs-gray-200);
+    border-left: 4px solid var(--cs-blue);
+    transition: box-shadow 0.2s ease;
 }
 
-.metric-card { background:white; border-radius:12px; padding:1rem; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
-.metric-value { font-size:1.8rem; font-weight:800; margin-bottom:0.2rem; }
-.metric-label { font-size:0.85rem; color:#666; }
+.violation-card:hover {
+    box-shadow: var(--cs-shadow-md);
+}
 
-.flagged-item { background:#fff3cd; border:1px solid #ffeeba; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; }
-.flagged-icon { font-size:1.2rem; margin-right:0.5rem; }
+.violation-card.sev-critical { border-left-color: var(--cs-red); }
+.violation-card.sev-high { border-left-color: var(--cs-orange); }
+.violation-card.sev-medium { border-left-color: var(--cs-amber); }
+.violation-card.sev-low { border-left-color: var(--cs-green); }
 
-/* Sidebar */
-section[data-testid="stSidebar"] > div { background: linear-gradient(180deg, #1F4E79 0%, #2E75B6 100%); }
-section[data-testid="stSidebar"] * { color: white !important; }
-section[data-testid="stSidebar"] a { color: #eaf4ff !important; }
+.violation-card .v-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+}
 
+.violation-card .v-title {
+    font-family: var(--cs-font) !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--cs-gray-900) !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+}
 
-/* Legal highlight + chips */
+.violation-card .v-desc {
+    font-size: 0.9rem !important;
+    color: var(--cs-gray-600) !important;
+    margin: 0 0 0.5rem !important;
+    line-height: 1.55 !important;
+}
+
+.violation-card .v-meta {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem !important;
+    color: var(--cs-gray-600) !important;
+}
+
+.violation-card .v-meta strong {
+    color: var(--cs-gray-800) !important;
+    font-weight: 600 !important;
+}
+
+/* ── Badges ── */
+.severity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    color: white !important;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.confidence-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    background: var(--cs-gray-100) !important;
+    color: var(--cs-gray-600) !important;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.badges-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* ── Law Highlight ── */
 .law-highlight {
-  background:#eef6ff; border:1px solid #d6e8ff; border-radius:10px;
-  padding:0.9rem 1rem; margin-top:0.9rem;
+    background: var(--cs-blue-light);
+    border: 1px solid #BBDEFB;
+    border-radius: var(--cs-radius);
+    padding: 0.9rem 1.1rem;
+    margin-top: 0.6rem;
 }
-.law-source-title { font-weight:800; color:#1F4E79; }
-.law-meta { font-size:0.85rem; color:#4d4d4d; margin-top:0.25rem; }
-.chip { display:inline-block; padding:0.22rem 0.6rem; border-radius:16px; background:#f1f3f5; color:#333;
-  margin:0.15rem 0.35rem 0 0; font-size:0.8rem; border:1px solid #e6e6e6; }
+
+.law-highlight .law-source-title {
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    color: var(--cs-navy) !important;
+    margin-bottom: 0.3rem;
+}
+
+.law-highlight .law-source-title a {
+    color: var(--cs-blue) !important;
+    text-decoration: underline !important;
+}
+
+.law-highlight .law-meta {
+    font-size: 0.82rem !important;
+    color: var(--cs-gray-600) !important;
+    margin-top: 0.2rem;
+    line-height: 1.5 !important;
+}
+
+.law-highlight .law-meta strong {
+    color: var(--cs-gray-800) !important;
+}
+
+/* ── Chips / Tags ── */
+.chip {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    background: var(--cs-gray-100);
+    color: var(--cs-gray-800);
+    margin: 0.2rem 0.25rem 0 0;
+    font-size: 0.78rem !important;
+    font-weight: 500;
+    border: 1px solid var(--cs-gray-200);
+    line-height: 1.5;
+}
+
+.legal-overview-bar {
+    background: white;
+    border: 1px solid var(--cs-gray-200);
+    border-radius: var(--cs-radius);
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--cs-shadow-sm);
+}
+
+.legal-overview-bar .lo-title {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: var(--cs-gray-600) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+}
+
+/* ── Penalty Box ── */
+.penalty-box {
+    background: var(--cs-gray-50);
+    border: 1px solid var(--cs-gray-200);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+}
+
+.penalty-box strong {
+    color: var(--cs-gray-900) !important;
+    font-size: 0.88rem !important;
+}
+
+.penalty-box .penalty-details {
+    color: var(--cs-gray-600) !important;
+    font-size: 0.84rem !important;
+    margin-top: 0.25rem;
+    line-height: 1.55 !important;
+}
+
+/* ── Penalty Summary (inline, compact) ── */
+.penalty-summary {
+    background: #FFF8E1;
+    border: 1px solid #FFE082;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.penalty-summary .ps-label {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    color: #E65100 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.penalty-summary .ps-item {
+    font-size: 0.82rem !important;
+    color: var(--cs-gray-800) !important;
+    background: rgba(255,255,255,0.7);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* ── Flagged Item ── */
+.flagged-item {
+    background: #FFF8E1;
+    border: 1px solid #FFE082;
+    border-left: 4px solid #F9A825;
+    border-radius: var(--cs-radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.85rem;
+}
+
+.flagged-item strong {
+    color: #E65100 !important;
+}
+
+.flagged-icon {
+    font-size: 1.1rem;
+    margin-right: 0.4rem;
+}
+
+/* ── Disclaimer ── */
+.disclaimer-box {
+    background: linear-gradient(135deg, #FFF8E1 0%, #FFF3CD 100%);
+    border: 1px solid #FFE082;
+    border-radius: var(--cs-radius);
+    padding: 1rem 1.25rem;
+    color: #5D4037 !important;
+    margin-top: 1.25rem;
+    font-size: 0.85rem !important;
+    line-height: 1.6 !important;
+}
+
+/* ── Expand/Collapse Controls ── */
+.expand-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: var(--cs-blue) !important;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-top: 0.25rem;
+}
+
+/* ── Upload Area ── */
+.empty-preview {
+    background: var(--cs-gray-100);
+    border: 2px dashed var(--cs-gray-300);
+    border-radius: var(--cs-radius-lg);
+    padding: 2rem 1.5rem;
+    color: var(--cs-gray-600);
+    text-align: center;
+    font-size: 0.9rem !important;
+}
+
+/* ── Streamlit Overrides ── */
+.stButton > button[kind="primary"] {
+    background: var(--cs-blue) !important;
+    border: none !important;
+    font-family: var(--cs-font) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.5rem !important;
+    font-size: 0.9rem !important;
+    transition: background 0.2s ease, transform 0.1s ease !important;
+}
+
+.stButton > button[kind="primary"]:hover {
+    background: #0D47A1 !important;
+    transform: translateY(-1px);
+}
+
+.stButton > button[kind="primary"]:active {
+    transform: translateY(0);
+}
+
+/* File uploader */
+[data-testid="stFileUploader"] {
+    border-radius: var(--cs-radius) !important;
+}
+
+/* Expanders */
+details {
+    border: 1px solid var(--cs-gray-200) !important;
+    border-radius: var(--cs-radius) !important;
+    background: white !important;
+}
+
+details summary {
+    font-family: var(--cs-font) !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    color: var(--cs-gray-800) !important;
+}
+
+/* Dataframes */
+[data-testid="stDataFrame"] {
+    border-radius: var(--cs-radius) !important;
+    font-size: 0.82rem !important;
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0.25rem;
+}
+
+.stTabs [data-baseweb="tab"] {
+    font-family: var(--cs-font) !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+/* Selectbox and inputs */
+.stSelectbox, .stTextInput {
+    font-family: var(--cs-font) !important;
+}
+
+/* ── Law Reference Card ── */
+.law-reference {
+    background: white;
+    border-left: 3px solid var(--cs-blue);
+    padding: 0.7rem 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--cs-shadow-sm);
+}
+
+.law-citation {
+    font-weight: 700 !important;
+    color: var(--cs-navy) !important;
+    font-size: 0.88rem !important;
+    margin-bottom: 0.2rem;
+}
+
+/* ── No Results ── */
+.no-violations-box {
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    border: 1px solid #A5D6A7;
+    border-radius: var(--cs-radius-lg);
+    padding: 2rem;
+    text-align: center;
+    color: var(--cs-green);
+}
+
+.no-violations-box .nv-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.no-violations-box .nv-text {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .metrics-row {
+        gap: 0.5rem;
+    }
+    .metric-card {
+        min-width: 80px;
+        padding: 0.75rem;
+    }
+    .metric-card .metric-value {
+        font-size: 1.5rem !important;
+    }
+    .violation-card {
+        padding: 1rem;
+    }
+    .page-header {
+        padding: 1rem 1.25rem;
+    }
+}

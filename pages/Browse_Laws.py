@@ -9,13 +9,24 @@ st.set_page_config(page_title="Browse Laws • ConstrucSafe BD", page_icon="📚
 load_css()
 lang = sidebar()
 
-st.title(t("browse_title", lang))
+# Page header
+st.markdown(
+    f"""
+    <div class="page-header">
+        <h1>📚 {t("browse_title", lang)}</h1>
+        <div class="subtitle">Select a violation type to view its associated laws, penalties, and enforcement details.</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 client = get_api_client()
+
 
 @st.cache_data(show_spinner=False, ttl=3600)
 def _cached_list_violations():
     return client.list_violations()
+
 
 violations = []
 try:
@@ -37,7 +48,10 @@ if violations:
             col1, col2 = st.columns([1, 1])
             with col1:
                 st.markdown(f"**English:** {details.get('display_name_en', vid)}")
-                st.markdown(f"**Bengali:** <span class='bengali-text'>{details.get('display_name_bn', '')}</span>", unsafe_allow_html=True)
+                st.markdown(
+                    f"**Bengali:** <span class='bengali-text'>{details.get('display_name_bn', '')}</span>",
+                    unsafe_allow_html=True,
+                )
                 st.markdown(f"**Category:** {details.get('category', 'N/A')}")
                 st.markdown(f"**Severity:** {details.get('severity', 'N/A')}")
                 st.markdown(f"**Affected:** {', '.join(details.get('affected_parties', [])) or 'N/A'}")
@@ -46,7 +60,7 @@ if violations:
                 for ind in details.get("visual_indicators", []) or []:
                     st.markdown(f"- {ind}")
 
-            # primary authority
+            # Primary authority
             enf = details.get("enforcement", {}) or {}
             aid = enf.get("primary_authority")
             if aid:
@@ -54,10 +68,13 @@ if violations:
                 st.markdown("### Enforcement authority")
                 try:
                     a = client.get_authority(aid)
-                    st.markdown(f"**{a.get('full_name','')}** ({a.get('authority_id','')})")
+                    st.markdown(f"**{a.get('full_name', '')}** ({a.get('authority_id', '')})")
                     if a.get("full_name_bn"):
-                        st.markdown(f"<div class='bengali-text'>{a.get('full_name_bn')}</div>", unsafe_allow_html=True)
-                    st.markdown(f"**Jurisdiction:** {a.get('jurisdiction','')}")
+                        st.markdown(
+                            f"<div class='bengali-text'>{a.get('full_name_bn')}</div>",
+                            unsafe_allow_html=True,
+                        )
+                    st.markdown(f"**Jurisdiction:** {a.get('jurisdiction', '')}")
                     if a.get("hotline"):
                         st.markdown(f"**Hotline:** {a.get('hotline')}")
                     if a.get("website"):
@@ -65,7 +82,7 @@ if violations:
                 except Exception:
                     st.info("Authority info not available.")
 
-            # legal references
+            # Legal references
             refs = details.get("legal_references", []) or []
             if refs:
                 st.markdown("---")
@@ -74,9 +91,9 @@ if violations:
                     st.markdown(
                         f'''
                         <div class="law-reference">
-                            <div class="law-citation">{ref.get("source_id","")} • {ref.get("citation","")}</div>
-                            <div style="font-size:0.9rem;">{ref.get("interpretation","")}</div>
-                            <div style="font-size:0.8rem; color:#666; margin-top:0.25rem;">Confidence: {ref.get("confidence","")}</div>
+                            <div class="law-citation">{ref.get("source_id", "")} • {ref.get("citation", "")}</div>
+                            <div style="font-size:0.9rem;">{ref.get("interpretation", "")}</div>
+                            <div style="font-size:0.8rem; color:#666; margin-top:0.25rem;">Confidence: {ref.get("confidence", "")}</div>
                         </div>
                         ''',
                         unsafe_allow_html=True,

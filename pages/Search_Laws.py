@@ -10,7 +10,17 @@ st.set_page_config(page_title="Search Laws • ConstrucSafe BD", page_icon="🔎
 load_css()
 lang = sidebar()
 
-st.title(t("search_title", lang))
+# Page header
+st.markdown(
+    f"""
+    <div class="page-header">
+        <h1>🔎 {t("search_title", lang)}</h1>
+        <div class="subtitle">Search the BNBC clause library by keyword to find relevant regulations.</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 client = get_api_client()
 
 q = st.text_input("Query", placeholder=t("search_placeholder", lang))
@@ -33,8 +43,22 @@ if st.button(t("search_btn", lang), type="primary"):
                 st.info("No matches found.")
             else:
                 df = pd.DataFrame(matches)
-                # order columns for readability
-                cols = [c for c in ["score","violation_id","citation","section","title","pdf_page","gazette_page","clause_id","source_catalog_id","confidence"] if c in df.columns]
+                cols = [
+                    c
+                    for c in [
+                        "score",
+                        "violation_id",
+                        "citation",
+                        "section",
+                        "title",
+                        "pdf_page",
+                        "gazette_page",
+                        "clause_id",
+                        "source_catalog_id",
+                        "confidence",
+                    ]
+                    if c in df.columns
+                ]
                 st.dataframe(df[cols] if cols else df, use_container_width=True)
 
                 st.caption("Tip: pick a violation_id above and open it in **Browse Laws** to see full details.")

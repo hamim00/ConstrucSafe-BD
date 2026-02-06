@@ -19,29 +19,55 @@ def get_api_client() -> ConstructSafeAPIClient:
 
 
 def sidebar() -> str:
-    # language
+    """Render sidebar and return current language code."""
+
     if "lang" not in st.session_state:
         st.session_state.lang = "en"
 
-    st.sidebar.markdown("### ⚙️ Settings")
+    lang = st.session_state.lang
+
+    # Brand
+    st.sidebar.markdown(
+        """
+        <div class="sidebar-brand">
+            <h2>🏗️ ConstrucSafe BD</h2>
+            <div class="tagline">AI Safety Compliance</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Navigation
+    st.sidebar.page_link("pages/Analyze.py", label="🔍 " + t("analyze_title", lang)[:20])
+    st.sidebar.page_link("pages/Browse_Laws.py", label="📚 " + t("browse_title", lang)[:25])
+    st.sidebar.page_link("pages/Search_Laws.py", label="🔎 " + t("search_title", lang)[:25])
+    st.sidebar.page_link("pages/About.py", label="ℹ️ " + t("about_title", lang)[:15])
+
+    st.sidebar.markdown("---")
+
+    # Settings
+    st.sidebar.markdown(f"### ⚙️ {t('sidebar_settings', lang)}")
+
     lang_label = st.sidebar.radio(
-        t("nav_language", st.session_state.lang),
+        t("nav_language", lang),
         options=["English", "বাংলা"],
         index=0 if st.session_state.lang == "en" else 1,
+        horizontal=True,
     )
     st.session_state.lang = "bn" if lang_label == "বাংলা" else "en"
 
-    # backend status
+    # Backend status
     st.sidebar.markdown("---")
     st.sidebar.markdown(f"**{t('nav_backend', st.session_state.lang)}**")
     client = get_api_client()
     try:
         h = client.health()
-        st.sidebar.success(f"{t('nav_status', st.session_state.lang)}: {h.get('status', 'ok')} (v{h.get('version', 'n/a')})")
+        version = h.get("version", "n/a")
+        st.sidebar.success(f"{t('nav_status', st.session_state.lang)}: ✅ v{version}")
     except Exception:
-        st.sidebar.warning(f"{t('nav_status', st.session_state.lang)}: unavailable")
+        st.sidebar.error(f"{t('nav_status', st.session_state.lang)}: ❌ Unavailable")
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("ConstrucSafe BD • Streamlit Frontend")
+    st.sidebar.caption("ConstrucSafe BD • v2.0")
 
     return st.session_state.lang

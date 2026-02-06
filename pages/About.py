@@ -9,18 +9,29 @@ st.set_page_config(page_title="About • ConstrucSafe BD", page_icon="ℹ️", l
 load_css()
 lang = sidebar()
 
-st.title(t("about_title", lang))
-
+# Page header
 st.markdown(
-    f'''
-    <div class="disclaimer-box {("bengali-text" if lang=="bn" else "")}">
-        {t("about_disclaimer", lang)}
+    f"""
+    <div class="page-header">
+        <h1>ℹ️ {t("about_title", lang)}</h1>
+        <div class="subtitle">{t("app_tagline", lang)}</div>
     </div>
-    ''',
+    """,
     unsafe_allow_html=True,
 )
 
-st.markdown("### Notes")
-st.markdown("- Backend is deployed on Railway; the frontend calls it via HTTPS.")
-st.markdown("- Analysis results depend on image quality and model behavior.")
-st.markdown("- For operational enforcement, validate all legal interpretations with qualified professionals.")
+bengali_cls = "bengali-text" if lang == "bn" else ""
+
+st.markdown(
+    f"""
+    <div class="disclaimer-box {bengali_cls}">
+        {t("about_disclaimer", lang)}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(f"### {t('about_notes_title', lang)}")
+st.markdown(f"- {t('about_note_1', lang)}")
+st.markdown(f"- {t('about_note_2', lang)}")
+st.markdown(f"- {t('about_note_3', lang)}")
