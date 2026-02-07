@@ -80,17 +80,17 @@ ConstrucSafe BD provides an accessible, bilingual (English/Bengali) web interfac
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USER (Browser)                           │
-│                  construcsafe-bd.streamlit.app                   │
+│                  construcsafe-bd.streamlit.app                  │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ HTTPS
                            ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    FRONTEND (Streamlit Cloud)                    │
+│                    FRONTEND (Streamlit Cloud)                   │
 │                                                                 │
-│  ┌──────────┐  ┌──────────────┐  ┌───────────┐  ┌───────────┐  │
-│  │ Analyze  │  │ Browse Laws  │  │  Search   │  │   About   │  │
-│  │  Page    │  │    Page      │  │   Page    │  │   Page    │  │
-│  └────┬─────┘  └──────┬───────┘  └─────┬─────┘  └───────────┘  │
+│  ┌──────────┐  ┌──────────────┐  ┌───────────┐  ┌───────────┐   │
+│  │ Analyze  │  │ Browse Laws  │  │  Search   │  │   About   │   │
+│  │  Page    │  │    Page      │  │   Page    │  │   Page    │   │
+│  └────┬─────┘  └──────┬───────┘  └─────┬─────┘  └───────────┘   │
 │       │               │               │                         │
 │  ┌────▼───────────────▼───────────────▼──────┐                  │
 │  │         API Client (requests)             │                  │
@@ -100,32 +100,32 @@ ConstrucSafe BD provides an accessible, bilingual (English/Bengali) web interfac
                         │ HTTPS (REST)
                         ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    BACKEND (Railway)                             │
+│                    BACKEND (Railway)                            │
 │               FastAPI + Uvicorn + Python 3.12                   │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │                   API Layer (FastAPI)                     │   │
+│  │                   API Layer (FastAPI)                    │   │
 │  │  /api/v1/analyze    POST  — Image analysis               │   │
 │  │  /api/v1/laws/*     GET   — Violations, authorities      │   │
 │  │  /api/v1/reports/*  POST  — PDF report generation        │   │
 │  │  /health            GET   — Status check                 │   │
 │  └──────┬───────────────────────────────┬───────────────────┘   │
 │         │                               │                       │
-│  ┌──────▼──────────┐   ┌───────────────▼────────────────┐      │
-│  │ Vision Analyzer │   │        Law Matcher              │      │
-│  │  (OpenAI API)   │   │  (JSON knowledge base)         │      │
-│  │                 │   │                                 │      │
-│  │ • GPT-4o        │   │ • 455 canonical violations     │      │
-│  │ • GPT-4o-mini   │   │ • 141 micro-violations         │      │
-│  │ • System prompt │   │ • 146 BNBC clauses             │      │
-│  │ • Image quality │   │ • 8 penalty profiles           │      │
-│  │   assessment    │   │ • 4 enforcement authorities    │      │
-│  └─────────────────┘   │ • 8 source catalog entries     │      │
-│                        └────────────────────────────────┘      │
-│  ┌─────────────────┐   ┌────────────────────────────────┐      │
-│  │  Usage Limiter  │   │        Cache Store             │      │
-│  │  (per-IP rate)  │   │   (response caching)           │      │
-│  └─────────────────┘   └────────────────────────────────┘      │
+│  ┌──────▼──────────┐   ┌───────────────▼────────────────┐       │
+│  │ Vision Analyzer │   │        Law Matcher             │       │
+│  │  (OpenAI API)   │   │  (JSON knowledge base)         │       │
+│  │                 │   │                                │       │
+│  │ • GPT-4o        │   │ • 455 canonical violations     │       │
+│  │ • GPT-4o-mini   │   │ • 141 micro-violations         │       │
+│  │ • System prompt │   │ • 146 BNBC clauses             │       │
+│  │ • Image quality │   │ • 8 penalty profiles           │       │
+│  │   assessment    │   │ • 4 enforcement authorities    │       │
+│  └─────────────────┘   │ • 8 source catalog entries     │       │
+│                        └────────────────────────────────┘       │
+│  ┌─────────────────┐   ┌────────────────────────────────┐       │
+│  │  Usage Limiter  │   │        Cache Store             │       │
+│  │  (per-IP rate)  │   │   (response caching)           │       │
+│  └─────────────────┘   └────────────────────────────────┘       │
 └─────────────────────────────────────────────────────────────────┘
                         │
                         ▼ (API call)
